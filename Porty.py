@@ -10,6 +10,7 @@ def calculate_portfolio(holdings, transactions):
     holdings['Current Value'] = holdings['Quantity'] * holdings['Last Traded Price']
     holdings['Invested Amount'] = holdings['Quantity'] * holdings['Avg Buy Price']
     holdings['Unrealised P&L'] = holdings['Current Value'] - holdings['Invested Amount']
+    holdings['Daily P&L'] = (holdings['Last Traded Price'] - holdings['Prev Close Price']) * holdings['Quantity']
 
     realised_pnl = 0
     buy_data = transactions[transactions['Type'].str.lower() == 'buy']
@@ -49,12 +50,14 @@ def main():
             total_value = holdings['Current Value'].sum()
             total_invested = holdings['Invested Amount'].sum()
             total_unrealised = holdings['Unrealised P&L'].sum()
+            total_daily_pnl = holdings['Daily P&L'].sum()
 
-            col1, col2, col3, col4 = st.columns(4)
+            col1, col2, col3, col4, col5 = st.columns(4)[-1]
             col1.metric("Total Value", f"Rs {total_value:,.2f}")
             col2.metric("Invested", f"Rs {total_invested:,.2f}")
             col3.metric("Unrealised P&L", f"Rs {total_unrealised:,.2f}")
             col4.metric("Realised P&L", f"Rs {realised_pnl:,.2f}")
+            col5.metric("Daily P&L", f"Rs {total_daily_pnl:,.2f}", delta=f"{total_daily_pnl:,.2f}")
 
             st.subheader("📊 Holdings")
             st.dataframe(holdings, use_container_width=True)
