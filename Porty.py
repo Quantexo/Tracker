@@ -30,7 +30,7 @@ def main():
     st.sidebar.header("Public Google Sheet Setup")
     sheet_id = st.sidebar.text_input("Google Sheet ID (from URL)", help="Get this from the URL: https://docs.google.com/spreadsheets/d/**[ID]**/edit")
     holdings_gid = st.sidebar.text_input("Holdings GID", value="0")
-    transactions_gid = st.sidebar.text_input("Transactions GID", value="123456")
+    transactions_gid = st.sidebar.text_input("Transactions GID", value="1531896722")
 
     if sheet_id and holdings_gid and transactions_gid:
         try:
