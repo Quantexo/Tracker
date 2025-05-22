@@ -15,12 +15,14 @@ def calculate_portfolio(holdings, transactions):
     realised_pnl = 0
     buy_data = transactions[transactions['Type'].str.lower() == 'buy']
     sell_data = transactions[transactions['Type'].str.lower() == 'sell']
+
     for _, row in sell_data.iterrows():
         symbol = row['Symbol']
         qty = row['Quantity']
         price = row['Price']
         avg_buy = buy_data[buy_data['Symbol'] == symbol]['Price'].mean()
         realised_pnl += (price - avg_buy) * qty
+
     return holdings, realised_pnl
 
 # --- Main App ---
@@ -29,7 +31,7 @@ def main():
     st.title("📈 NEPSE Portfolio Tracker")
 
     st.sidebar.header("Public Google Sheet Setup")
-    sheet_id = st.sidebar.text_input("Google Sheet ID (from URL)", help="Get this from the URL: https://docs.google.com/spreadsheets/d/**[ID]**/edit")
+    sheet_id = st.sidebar.text_input("Google Sheet ID (from URL)", help="From: https://docs.google.com/spreadsheets/d/**[ID]**/edit")
     holdings_gid = st.sidebar.text_input("Holdings GID", value="0")
     transactions_gid = st.sidebar.text_input("Transactions GID", value="1347762871")
 
@@ -41,12 +43,18 @@ def main():
             holdings = pd.read_csv(holdings_url)
             transactions = pd.read_csv(transactions_url)
 
+            # Ensure numeric
+            for col in ['Quantity', 'Avg Buy Price', 'Last Traded Price', 'Prev Close Price']:
+                holdings[col] = pd.to_numeric(holdings[col], errors='coerce')
+
+            for col in ['Quantity', 'Price']:
+                transactions[col] = pd.to_numeric(transactions[col], errors='coerce')
+
             holdings, realised_pnl = calculate_portfolio(holdings, transactions)
 
             st.success("✅ Data loaded successfully!")
 
-            # Dashboard
-            st.subheader("💼 Portfolio Summary")
+            # Dashboard Metrics
             total_value = holdings['Current Value'].sum()
             total_invested = holdings['Invested Amount'].sum()
             total_unrealised = holdings['Unrealised P&L'].sum()
@@ -59,7 +67,8 @@ def main():
             col4.metric("Realised P&L", f"Rs {realised_pnl:,.2f}")
             col5.metric("Daily P&L", f"Rs {total_daily_pnl:,.2f}", delta=f"{total_daily_pnl:,.2f}")
 
-            st.subheader("📊 Holdings")
+            # Tables
+            st.subheader("💼 Holdings")
             st.dataframe(holdings, use_container_width=True)
 
             st.subheader("🧾 Transactions")
