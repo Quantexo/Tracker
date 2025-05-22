@@ -52,7 +52,7 @@ def main():
             total_unrealised = holdings['Unrealised P&L'].sum()
             total_daily_pnl = holdings['Daily P&L'].sum()
 
-            col1, col2, col3, col4, col5 = st.columns(5)[-1]
+            col1, col2, col3, col4, col5 = st.columns(5)
             col1.metric("Total Value", f"Rs {total_value:,.2f}")
             col2.metric("Invested", f"Rs {total_invested:,.2f}")
             col3.metric("Unrealised P&L", f"Rs {total_unrealised:,.2f}")
