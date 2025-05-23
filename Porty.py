@@ -101,10 +101,6 @@ def main():
     # Check if configuration is set
     if not sheet_id or sheet_id == "your_sheet_id_here":
         st.error("❌ Please update the SHEET_ID in the code with your actual Google Sheet ID")
-        st.code("""
-# Update this line in the code:
-SHEET_ID = "your_actual_sheet_id_here"
-        """)
         return
 
     try:
