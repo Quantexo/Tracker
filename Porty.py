@@ -2,9 +2,9 @@ import streamlit as st
 import pandas as pd
 
 # --- CONFIGURATION - Update these with your Google Sheet details ---
-SHEET_ID = "your_sheet_id_here"  # Replace with your actual sheet ID
-HOLDINGS_GID = "0"  # Replace with your holdings sheet GID
-TRANSACTIONS_GID = "1347762871"  # Replace with your transactions sheet GID
+SHEET_ID = "1ufRCvZj2neZbjSQVJaMvSZUQcP-hdYdjatTy0E_N5-M"  
+HOLDINGS_GID = "0" 
+TRANSACTIONS_GID = "1347762871"  
 
 # --- Helper to build CSV URL ---
 @st.cache_data(ttl=3600)  # Cache for 1 hour
