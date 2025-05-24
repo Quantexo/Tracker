@@ -1,9 +1,9 @@
-import streamlit as st
 import pandas as pd
-import plotly
-print(plotly.__file__)
-import plotly.express as px
+import streamlit as st
+import plotly.graph_objects as go
 from datetime import datetime, timedelta
+import pytz
+import io
 
 st.set_page_config("NEPSE Portfolio Tracker", layout="wide")
 
@@ -13,6 +13,7 @@ HOLDINGS_GID = "0"
 TRANSACTIONS_GID = "1347762871"
 HISTORY_GID = "391361477"
 DIVIDENDS_GID = "1876183995"
+
 # --- Helper to build CSV URL ---
 @st.cache_data(ttl=3600)
 def get_csv_url(sheet_id, sheet_gid):
@@ -84,15 +85,6 @@ def calculate_historical_performance(history_data, transactions):
         # Calculate cumulative returns
         history_data['Cumulative Return'] = (1 + history_data['Daily Return']).cumprod() - 1
         
-        # Merge with transaction dates
-        if transactions is not None:
-            transactions['Date'] = pd.to_datetime(transactions['Date'])
-            transactions['Transaction Amount'] = transactions['Quantity'] * transactions['Price']
-            transactions['Transaction Amount'] = transactions.apply(
-                lambda x: -x['Transaction Amount'] if x['Type'].lower() == 'buy' else x['Transaction Amount'],
-                axis=1
-            )
-        
         return history_data
     except Exception as e:
         st.warning(f"Couldn't process historical data: {str(e)}")
@@ -117,6 +109,67 @@ def style_dataframe(df):
         }, na_rep="-")
     return df
 
+# --- Create Plotly Figures using graph_objects ---
+def create_portfolio_value_chart(historical_perf):
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(
+        x=historical_perf['Date'],
+        y=historical_perf['Portfolio Value'],
+        mode='lines',
+        name='Portfolio Value'
+    ))
+    fig.update_layout(
+        title='Portfolio Value Over Time',
+        xaxis_title='Date',
+        yaxis_title='Value (Rs)',
+        hovermode='x unified'
+    )
+    return fig
+
+def create_daily_returns_chart(historical_perf):
+    fig = go.Figure()
+    fig.add_trace(go.Bar(
+        x=historical_perf['Date'],
+        y=historical_perf['Daily Return'],
+        marker_color=['green' if x > 0 else 'red' for x in historical_perf['Daily Return']],
+        name='Daily Return'
+    ))
+    fig.update_layout(
+        title='Daily Returns',
+        xaxis_title='Date',
+        yaxis_title='Return',
+        hovermode='x unified'
+    )
+    return fig
+
+def create_cumulative_returns_chart(historical_perf):
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(
+        x=historical_perf['Date'],
+        y=historical_perf['Cumulative Return'],
+        mode='lines',
+        name='Cumulative Return'
+    ))
+    fig.update_layout(
+        title='Cumulative Returns',
+        xaxis_title='Date',
+        yaxis_title='Return',
+        hovermode='x unified'
+    )
+    return fig
+
+def create_dividend_pie_chart(dividends):
+    div_by_symbol = dividends.groupby('Symbol')['Amount'].sum().reset_index()
+    fig = go.Figure()
+    fig.add_trace(go.Pie(
+        labels=div_by_symbol['Symbol'],
+        values=div_by_symbol['Amount'],
+        textinfo='label+percent',
+        hoverinfo='label+value'
+    ))
+    fig.update_layout(title='Dividend Distribution by Stock')
+    return fig
+
 # --- Main App ---
 def main():
     st.title("📈 NEPSE Portfolio Tracker")
@@ -125,7 +178,7 @@ def main():
         st.markdown("""
         This app automatically tracks your NEPSE portfolio using data from a public Google Sheet.
         
-        **Enhanced Features:**
+        **Features:**
         - Real-time portfolio valuation
         - Unrealized and realized P&L tracking
         - Daily performance monitoring
@@ -184,19 +237,15 @@ def main():
             tab1, tab2, tab3 = st.tabs(["Portfolio Value", "Daily Returns", "Cumulative Returns"])
             
             with tab1:
-                fig = px.line(historical_perf, x='Date', y='Portfolio Value', 
-                             title='Portfolio Value Over Time')
+                fig = create_portfolio_value_chart(historical_perf)
                 st.plotly_chart(fig, use_container_width=True)
             
             with tab2:
-                fig = px.bar(historical_perf, x='Date', y='Daily Return', 
-                            title='Daily Returns', color='Daily Return',
-                            color_continuous_scale=['red', 'green'])
+                fig = create_daily_returns_chart(historical_perf)
                 st.plotly_chart(fig, use_container_width=True)
             
             with tab3:
-                fig = px.line(historical_perf, x='Date', y='Cumulative Return',
-                             title='Cumulative Returns')
+                fig = create_cumulative_returns_chart(historical_perf)
                 st.plotly_chart(fig, use_container_width=True)
         else:
             st.warning("Historical performance data not available or couldn't be processed")
@@ -210,6 +259,11 @@ def main():
             st.subheader("💰 Dividend History")
             dividends['Date'] = pd.to_datetime(dividends['Date'])
             st.dataframe(dividends.sort_values('Date', ascending=False), use_container_width=True)
+
+            # Dividend Analysis
+            st.subheader("📊 Dividend Analysis")
+            fig = create_dividend_pie_chart(dividends)
+            st.plotly_chart(fig, use_container_width=True)
 
         # Transactions Table
         st.subheader("🧾 Transactions")
