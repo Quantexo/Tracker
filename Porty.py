@@ -15,6 +15,9 @@ def calculate_portfolio(holdings, transactions):
     for col in numeric_cols:
         holdings[col] = pd.to_numeric(holdings[col], errors='coerce').fillna(0)
     
+    # Filter out holdings with quantity <= 0
+    holdings = holdings[holdings['Quantity'] > 0]
+    
     # Calculate metrics
     holdings['Current Value'] = holdings['Quantity'] * holdings['Last Traded Price']
     holdings['Invested Amount'] = holdings['Quantity'] * holdings['Avg Buy Price']
@@ -127,11 +130,9 @@ def main():
                 st.cache_data.clear()
                 st.rerun()
 
-
     except Exception as e:
         st.error(f"❌ Error loading data: {str(e)}")
         st.error("Please check your Google Sheet configuration and ensure it's publicly accessible.")
     
 if __name__ == "__main__":
     main()
-
