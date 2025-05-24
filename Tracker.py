@@ -25,6 +25,10 @@ def calculate_portfolio(holdings, transactions, dividends=None):
     numeric_cols = ['Quantity', 'Avg Buy Price', 'Last Traded Price', 'Prev Close Price']
     for col in numeric_cols:
         holdings[col] = pd.to_numeric(holdings[col], errors='coerce').fillna(0)
+
+    if 'Last Updated' in holdings.columns:
+        nepal_tz =pytz.timezone('Asia/Kathmandu')
+        holdings['Last Updated'] = pd.to_datetime(holdings['Last Updated']).dt.tz_localize(nepal_tz)
     
     holdings = holdings[holdings['Quantity'] > 0]
     
@@ -37,6 +41,8 @@ def calculate_portfolio(holdings, transactions, dividends=None):
 
     # Calculate realized P&L from transactions
     realised_pnl = 0
+    # In the transactions processing part of the same function:
+    transactions['Date'] = pd.to_datetime(transactions['Date']).dt.tz_localize(nepal_tz)
     try:
         transactions['Quantity'] = pd.to_numeric(transactions['Quantity'], errors='coerce')
         transactions['Price'] = pd.to_numeric(transactions['Price'], errors='coerce')
@@ -57,7 +63,8 @@ def calculate_portfolio(holdings, transactions, dividends=None):
     
     # Calculate dividend income if dividend data is available
     dividend_income = 0
-    if dividends is not None:
+    if dividends is not None and 'Date' in dividends.columns:
+    dividends['Date'] = pd.to_datetime(dividends['Date']).dt.tz_localize(nepal_tz)
         try:
             dividends['Amount'] = pd.to_numeric(dividends['Amount'], errors='coerce')
             dividends['Date'] = pd.to_datetime(dividends['Date'], errors='coerce')
@@ -75,8 +82,7 @@ def calculate_portfolio(holdings, transactions, dividends=None):
 # --- Historical Performance Tracking ---
 def calculate_historical_performance(history_data, transactions):
     try:
-        history_data['Date'] = pd.to_datetime(history_data['Date'])
-        history_data['Portfolio Value'] = pd.to_numeric(history_data['Portfolio Value'])
+        history_data['Date'] = pd.to_datetime(history_data['Date']).dt.tz_localize(pytz.timezone('Asia/Kathmandu'))
         
         # Calculate daily returns
         history_data = history_data.sort_values('Date')
