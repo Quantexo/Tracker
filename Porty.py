@@ -1,11 +1,6 @@
 import streamlit as st
 import pandas as pd
 
-# --- CONFIGURATION - Update these with your Google Sheet details ---
-SHEET_ID = "1ufRCvZj2neZbjSQVJaMvSZUQcP-hdYdjatTy0E_N5-M"  
-HOLDINGS_GID = "0" 
-TRANSACTIONS_GID = "1347762871"  
-
 # --- Helper to build CSV URL ---
 @st.cache_data(ttl=3600)  # Cache for 1 hour
 def get_csv_url(sheet_id, sheet_gid):
@@ -69,44 +64,25 @@ def main():
     st.set_page_config("NEPSE Portfolio Tracker", layout="wide")
     st.title("📈 NEPSE Portfolio Tracker")
     
-    # Show configuration info and option to override
-    with st.expander("ℹ️ Configuration"):
-        st.info(f"**Current Configuration:**\n- Sheet ID: `{SHEET_ID}`\n- Holdings GID: `{HOLDINGS_GID}`\n- Transactions GID: `{TRANSACTIONS_GID}`")
-        
+    # Fixed sheet configuration (replace these with your actual values)
+    SHEET_ID = "1ufRCvZj2neZbjSQVJaMvSZUQcP-hdYdjatTy0E_N5-M"
+    HOLDINGS_GID = "0"
+    TRANSACTIONS_GID = "1347762871"
+
+    with st.expander("ℹ️ About this app"):
         st.markdown("""
-        **To use a different sheet temporarily:**
-        Use the sidebar to override these settings.
+        This app automatically tracks your NEPSE portfolio using data from a public Google Sheet.
         
-        **To permanently change the configuration:**
-        Update the variables at the top of the Python file.
+        **Features:**
+        - Real-time portfolio valuation
+        - Unrealized and realized P&L tracking
+        - Daily performance monitoring
         """)
-
-    # Optional sidebar override
-    st.sidebar.header("Override Configuration (Optional)")
-    override_sheet = st.sidebar.checkbox("Use different sheet")
-    
-    if override_sheet:
-        sheet_id = st.sidebar.text_input("Google Sheet ID", value=SHEET_ID)
-        holdings_gid = st.sidebar.text_input("Holdings GID", value=HOLDINGS_GID)
-        transactions_gid = st.sidebar.text_input("Transactions GID", value=TRANSACTIONS_GID)
-    else:
-        sheet_id = SHEET_ID
-        holdings_gid = HOLDINGS_GID
-        transactions_gid = TRANSACTIONS_GID
-    
-    if st.sidebar.button("Clear Cache"):
-        st.cache_data.clear()
-        st.rerun()
-
-    # Check if configuration is set
-    if not sheet_id or sheet_id == "your_sheet_id_here":
-        st.error("❌ Please update the SHEET_ID in the code with your actual Google Sheet ID")
-        return
 
     try:
         with st.spinner("Loading data from Google Sheets..."):
-            holdings_url = get_csv_url(sheet_id, holdings_gid)
-            transactions_url = get_csv_url(sheet_id, transactions_gid)
+            holdings_url = get_csv_url(SHEET_ID, HOLDINGS_GID)
+            transactions_url = get_csv_url(SHEET_ID, TRANSACTIONS_GID)
 
             holdings = pd.read_csv(holdings_url)
             transactions = pd.read_csv(transactions_url)
@@ -144,10 +120,7 @@ def main():
 
     except Exception as e:
         st.error(f"❌ Error loading data: {str(e)}")
-        st.error("Please check:")
-        st.error("- The Sheet is public (Anyone with link can view)")
-        st.error("- The Sheet ID and GIDs are correct")
-        st.error("- The sheet has the required columns")
+        st.error("Please check your Google Sheet configuration and ensure it's publicly accessible.")
 
 if __name__ == "__main__":
     main()
