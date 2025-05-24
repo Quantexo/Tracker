@@ -26,7 +26,13 @@ def calculate_portfolio(holdings, transactions, dividends=None):
     for col in numeric_cols:
         holdings[col] = pd.to_numeric(holdings[col], errors='coerce').fillna(0)
 
-    
+    # Safely handle timestamp if column exists
+    if 'Last Updated' in holdings.columns:
+        try:
+            nepal_tz = pytz.timezone('Asia/Kathmandu')
+            holdings['Last Updated'] = pd.to_datetime(holdings['Last Updated']).dt.tz_localize(nepal_tz)
+        except Exception as e:
+            st.warning(f"Couldn't process timestamps: {str(e)}")
     
     holdings = holdings[holdings['Quantity'] > 0]
     
