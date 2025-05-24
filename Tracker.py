@@ -231,6 +231,10 @@ def main():
         col5.metric("Dividend Income", f"Rs {dividend_income:,.2f}")
         col6.metric("Daily P&L", f"Rs {total_daily_pnl:,.2f}")
 
+        # Standardize date handling with timezone (Nepal time)
+        nepal_tz = pytz.timezone('Asia/Kathmandu')
+        holdings['Last Updated'] = pd.to_datetime(holdings['Last Updated']).dt.tz_localize(nepal_tz)
+
         # Navigation Tabs
         tab1, tab2, tab3, tab4 = st.tabs(["💼 Holdings", "🧾 Transactions", "📈 Historical Performance", "💰 Dividend History"])
 
@@ -273,10 +277,6 @@ def main():
     except Exception as e:
         st.error(f"❌ Error loading data: {str(e)}")
         st.error("Please check your Google Sheet configuration and ensure it's publicly accessible.")
-
-# Standardize date handling with timezone (Nepal time)
-nepal_tz = pytz.timezone('Asia/Kathmandu')
-holdings['Last Updated'] = pd.to_datetime(holdings['Last Updated']).dt.tz_localize(nepal_tz)
    
 if __name__ == "__main__":
     main()
