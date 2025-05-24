@@ -119,18 +119,19 @@ def main():
         st.subheader("🧾 Transactions")
         st.dataframe(transactions, use_container_width=True)
 
+        # At the bottom of your main content
+        st.divider()
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            if st.button("Clear Cache"):
+                st.cache_data.clear()
+                st.rerun()
+
+
     except Exception as e:
         st.error(f"❌ Error loading data: {str(e)}")
         st.error("Please check your Google Sheet configuration and ensure it's publicly accessible.")
     
-    # At the bottom of your main content
-st.divider()
-col1, col2, col3 = st.columns(3)
-with col1:
-    if st.button("Clear Cache"):
-        st.cache_data.clear()
-        st.rerun()
-
 if __name__ == "__main__":
     main()
 
