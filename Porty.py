@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 
+st.set_page_config("NEPSE Portfolio Tracker", layout="wide")
+
 # --- Helper to build CSV URL ---
 @st.cache_data(ttl=3600)  # Cache for 1 hour
 def get_csv_url(sheet_id, sheet_gid):
@@ -61,7 +63,6 @@ def style_dataframe(df):
 
 # --- Main App ---
 def main():
-    st.set_page_config("NEPSE Portfolio Tracker", layout="wide")
     st.title("📈 NEPSE Portfolio Tracker")
     
     # Fixed sheet configuration (replace these with your actual values)
