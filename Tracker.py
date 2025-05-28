@@ -210,8 +210,6 @@ def main():
             
             # Calculate historical performance
             historical_perf = calculate_historical_performance(history_data, transactions)
-
-        st.success("")
         
         # Dashboard Metrics
         total_value = holdings['Current Value'].sum()
