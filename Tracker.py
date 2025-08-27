@@ -11,7 +11,6 @@ st.set_page_config("NEPSE Portfolio Tracker", layout="wide")
 SHEET_ID = "1ufRCvZj2neZbjSQVJaMvSZUQcP-hdYdjatTy0E_N5-M"
 HOLDINGS_GID = "0"
 TRANSACTIONS_GID = "1347762871"
-HISTORY_GID = "391361477"
 DIVIDENDS_GID = "1876183995"
 
 # --- Helper to build CSV URL ---
@@ -72,24 +71,6 @@ def calculate_portfolio(holdings, transactions, dividends=None):
     
     return holdings, realised_pnl, dividend_income
 
-# --- Historical Performance Tracking ---
-def calculate_historical_performance(history_data, transactions):
-    try:
-        history_data['Date'] = pd.to_datetime(history_data['Date'])
-        history_data['Portfolio Value'] = pd.to_numeric(history_data['Portfolio Value'])
-        
-        # Calculate daily returns
-        history_data = history_data.sort_values('Date')
-        history_data['Daily Return'] = history_data['Portfolio Value'].pct_change()
-        
-        # Calculate cumulative returns
-        history_data['Cumulative Return'] = (1 + history_data['Daily Return']).cumprod() - 1
-        
-        return history_data
-    except Exception as e:
-        st.warning(f"Couldn't process historical data: {str(e)}")
-        return None
-
 # --- Style DataFrames ---
 def style_dataframe(df):
     if 'Unrealised P&L' in df.columns:
@@ -108,55 +89,6 @@ def style_dataframe(df):
             'Dividend Income': 'Rs {:,.2f}'
         }, na_rep="-")
     return df
-
-# --- Create Plotly Figures using graph_objects ---
-def create_portfolio_value_chart(historical_perf):
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(
-        x=historical_perf['Date'],
-        y=historical_perf['Portfolio Value'],
-        mode='lines',
-        name='Portfolio Value'
-    ))
-    fig.update_layout(
-        title='Portfolio Value Over Time',
-        xaxis_title='Date',
-        yaxis_title='Value (Rs)',
-        hovermode='x unified'
-    )
-    return fig
-
-def create_daily_returns_chart(historical_perf):
-    fig = go.Figure()
-    fig.add_trace(go.Bar(
-        x=historical_perf['Date'],
-        y=historical_perf['Daily Return'],
-        marker_color=['green' if x > 0 else 'red' for x in historical_perf['Daily Return']],
-        name='Daily Return'
-    ))
-    fig.update_layout(
-        title='Daily Returns',
-        xaxis_title='Date',
-        yaxis_title='Return',
-        hovermode='x unified'
-    )
-    return fig
-
-def create_cumulative_returns_chart(historical_perf):
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(
-        x=historical_perf['Date'],
-        y=historical_perf['Cumulative Return'],
-        mode='lines',
-        name='Cumulative Return'
-    ))
-    fig.update_layout(
-        title='Cumulative Returns',
-        xaxis_title='Date',
-        yaxis_title='Return',
-        hovermode='x unified'
-    )
-    return fig
 
 def create_dividend_pie_chart(dividends):
     div_by_symbol = dividends.groupby('Symbol')['Amount'].sum().reset_index()
@@ -191,12 +123,10 @@ def main():
             # Load all data sources
             holdings_url = get_csv_url(SHEET_ID, HOLDINGS_GID)
             transactions_url = get_csv_url(SHEET_ID, TRANSACTIONS_GID)
-            history_url = get_csv_url(SHEET_ID, HISTORY_GID)
             dividends_url = get_csv_url(SHEET_ID, DIVIDENDS_GID)
 
             holdings = pd.read_csv(holdings_url)
             transactions = pd.read_csv(transactions_url)
-            history_data = pd.read_csv(history_url)
             dividends = pd.read_csv(dividends_url)
 
             # Validate required columns
@@ -207,9 +137,6 @@ def main():
 
             # Calculate portfolio metrics
             holdings, realised_pnl, dividend_income = calculate_portfolio(holdings, transactions, dividends)
-            
-            # Calculate historical performance
-            historical_perf = calculate_historical_performance(history_data, transactions)
         
         # Dashboard Metrics
         total_value = holdings['Current Value'].sum()
@@ -241,15 +168,6 @@ def main():
             st.dataframe(transactions.sort_values('Date', ascending=False), use_container_width=True)
 
         with tab3:
-            st.subheader("📈 Historical Performance")
-            if historical_perf is not None:
-                st.plotly_chart(create_portfolio_value_chart(historical_perf), use_container_width=True)
-                st.plotly_chart(create_daily_returns_chart(historical_perf), use_container_width=True)
-                st.plotly_chart(create_cumulative_returns_chart(historical_perf), use_container_width=True)
-            else:
-                st.warning("Historical performance data not available or couldn't be processed")
-
-        with tab4:
             if not dividends.empty:
                 st.subheader("💰 Dividend History")
                 dividends['Date'] = pd.to_datetime(dividends['Date'])
