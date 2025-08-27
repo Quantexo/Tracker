@@ -157,7 +157,7 @@ def main():
         col6.metric("Daily P&L", f"Rs {total_daily_pnl:,.2f}")
 
         # Navigation Tabs
-        tab1, tab2, tab3, tab4 = st.tabs(["💼 Holdings", "🧾 Transactions", "📈 Historical Performance", "💰 Dividend History"])
+        tab1, tab2, tab3 = st.tabs(["💼 Holdings", "🧾 Transactions",  "💰 Dividend History"])
 
         with tab1:
             st.subheader("💼 Holdings")
